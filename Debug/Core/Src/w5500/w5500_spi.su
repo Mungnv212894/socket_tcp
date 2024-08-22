@@ -1,0 +1,9 @@
+../Core/Src/w5500/w5500_spi.c:15:9:SPIReadWrite	16	static
+../Core/Src/w5500/w5500_spi.c:28:7:wizchip_select	8	static
+../Core/Src/w5500/w5500_spi.c:33:7:wizchip_deselect	8	static
+../Core/Src/w5500/w5500_spi.c:38:9:wizchip_read	16	static
+../Core/Src/w5500/w5500_spi.c:45:7:wizchip_write	16	static
+../Core/Src/w5500/w5500_spi.c:50:6:wizchip_readburst	24	static
+../Core/Src/w5500/w5500_spi.c:59:7:wizchip_writeburst	24	static
+../Core/Src/w5500/w5500_spi.c:68:6:W5500IOInit	32	static
+../Core/Src/w5500/w5500_spi.c:88:6:W5500Init	40	static
