@@ -29,6 +29,7 @@
 #include "w5500_spi.h"
 #include "DHCP/dhcp.h"
 #include "time.h"
+
 //#include "web_socket/web_socket.h"
 
 #define DHCP_BUFF_SIZE	2048
@@ -41,12 +42,14 @@ uint8_t dhcp_buffer[DHCP_BUFF_SIZE];
 
 #define PING_TARGET_IP "8.8.8.8" //Ping
 
-#define RANDOM_STRING_LENGTH 4000
+#define RANDOM_STRING_LENGTH 5000
 
 #define START_TAG "start<"
 #define END_TAG "end>"
 #define START_TAG_LENGTH (sizeof(START_TAG) - 1)
 #define END_TAG_LENGTH (sizeof(END_TAG) - 1)
+
+#define BUFFER_SIZE (RANDOM_STRING_LENGTH + sizeof(START_TAG) - 1 + sizeof(END_TAG) - 1)
 
 
 
@@ -106,7 +109,7 @@ static void PrintPHYConf(void);
 void OnDHCPIPAssigned(void);
 void DisplayNetworkConfigurations();
 void generateRandomString(char *str, size_t length);
-void configureSocket(uint8_t socket);
+
 //void sendRandomString(void);
 
 
@@ -298,29 +301,40 @@ void generateRandomString(char *str, size_t length) {
 }
 
 void sendData(int sock) {
-	char randomString[RANDOM_STRING_LENGTH + 1];
-	    char buffer[RANDOM_STRING_LENGTH + START_TAG_LENGTH + END_TAG_LENGTH + 1]; // Đủ lớn để chứa cả START_TAG, dữ liệu và END_TAG
+    char randomString[RANDOM_STRING_LENGTH + 1];
+    char buffer[BUFFER_SIZE];
 
-	    // Tạo chuỗi ngẫu nhiên
-	    generateRandomString(randomString, RANDOM_STRING_LENGTH);
-	    randomString[RANDOM_STRING_LENGTH] = '\0'; // Đảm bảo kết thúc chuỗi bằng ký tự NULL
+    // Tạo chuỗi ngẫu nhiên
+    generateRandomString(randomString, RANDOM_STRING_LENGTH);
+    randomString[RANDOM_STRING_LENGTH] = '\0'; // Đảm bảo kết thúc chuỗi bằng ký tự NULL
 
-	    // Tạo chuỗi bao bọc với START_TAG và END_TAG
-	    snprintf(buffer, sizeof(buffer), "%s%s%s", START_TAG, randomString, END_TAG);
+    // Tạo chuỗi bao bọc với START_TAG và END_TAG
+    snprintf(buffer, sizeof(buffer), "%s%s%s", START_TAG, randomString, END_TAG);
 
-	    // Gửi chuỗi bao bọc đến server
-	    if (send(sock, (uint8_t*)buffer, strlen(buffer)) <= 0) {
-	        printf("\r\nFailed to send data!");
-	    } else {
-	        printf("\r\nSent Oke");
-	    }
+    int totalSent = 0;
+    int bufferSize = strlen(buffer);
+
+    while (totalSent < bufferSize) {
+        // Tính toán kích thước dữ liệu còn lại để gửi
+        int remaining = bufferSize - totalSent;
+
+        // Gửi dữ liệu qua W5500
+        int sent = send(sock, (uint8_t*)buffer + totalSent, remaining);
+
+        if (sent <= 0) {
+            printf("\r\nFailed to send data!");
+            return;
+        }
+
+        totalSent += sent;
+
+        // In số byte đã gửi và số byte còn lại
+        printf("\r\nSent %d bytes, %d bytes remaining", totalSent, bufferSize - totalSent);
+    }
+
+    printf("\r\nSent Oke");
 }
 
-
-void configureSocket(uint8_t socket) {
-    // Cấu hình RX Buffer của socket với kích thước 8KB
-    writeSn_RXBUF_SIZE(socket, RX_BUFFER_SIZE);
-}
 
 
 
